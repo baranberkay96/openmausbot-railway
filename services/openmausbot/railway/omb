@@ -1,0 +1,3 @@
+#!/bin/sh
+# Upstream's OpenMausBot command line as the app user (see /opt/omb-railway/omb.mjs). Example: omb pair --label Laptop
+exec node /opt/omb-railway/omb.mjs "$@"

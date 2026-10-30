@@ -1,0 +1,60 @@
+# OpenMausBot on Railway: the only public listener, on $PORT behind Railway's edge.
+# Written for this template. The rules follow upstream's documented proxy contract
+# (docs/self-hosting.md, "Putting a proxy in front"):
+#   - keep the browser's Host, set X-Forwarded-For and X-Forwarded-Proto, so every request that comes through
+#     here is "remote" for OpenMausBot and needs a paired session (it never gets the loopback owner's trust);
+#   - write X-Forwarded-For ourselves (one value, the client) because the pairing lockout keys on it;
+#   - do not buffer the event stream.
+# The loopback ports must match PORTS in lib.mjs.
+{
+	admin off
+	auto_https off
+	persist_config off
+	grace_period 10s
+	servers {
+		# Railway's edge reaches the container from a private address and names the client in X-Real-IP.
+		# Anything else (or no header) leaves the peer address as the client.
+		trusted_proxies static private_ranges 100.64.0.0/10
+		trusted_proxies_strict
+		client_ip_headers X-Real-IP X-Forwarded-For
+	}
+}
+
+:{$PORT} {
+	encode zstd gzip
+	header -Server
+
+	# A browser that has no OpenMausBot session yet lands on the owner sign-in page instead of a page that asks
+	# for a pairing code it does not have. The sign-in page links to /pair for codes and email sign-in.
+	@no_session_landing {
+		method GET HEAD
+		path /
+		not header_regexp Cookie omb_session_
+	}
+	redir @no_session_landing /railway/sign-in 302
+
+	handle /railway/sign-in {
+		reverse_proxy 127.0.0.1:8797 {
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	# Webhook receiver: each hook has its own secret, so it sits outside the login (as upstream's Caddyfile does).
+	handle /hooks/* {
+		reverse_proxy 127.0.0.1:8800 {
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	# Everything else is OpenMausBot itself: the web app, the API, the event stream and WebSockets.
+	# /api/health answers {"app":"openmausbot"} without a session (Railway's healthcheck).
+	handle {
+		reverse_proxy 127.0.0.1:8799 {
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Forwarded-Proto https
+			flush_interval -1
+		}
+	}
+}

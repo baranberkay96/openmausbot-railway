@@ -1,0 +1,80 @@
+{
+  "name": "OpenMausBot v0.1 AI Bot Team Chat",
+  "description": "Chat with your own team of AI agents, each with its own model and tools.",
+  "category": "AI/ML",
+  "tags": [
+    "openmausbot",
+    "ai-agents",
+    "multi-agent",
+    "claude-code",
+    "codex",
+    "chat",
+    "self-hosted",
+    "grok-bot-alternative"
+  ],
+  "image": "https://cdn.jsdelivr.net/gh/milind-soni/OpenMausBot@0213b7435fc83a936f77c18475ba2a0d7b7c2de4/public/app-icon-512.png",
+  "upstream": {
+    "repo": "milind-soni/OpenMausBot",
+    "version": "v0.1.134 (GitHub release, 2026-10-30)",
+    "commit": "0213b7435fc83a936f77c18475ba2a0d7b7c2de4",
+    "image": "ghcr.io/milind-soni/openmausbot:v0.1.134@sha256:7efc06588a124d18b4188df1fa89c332b9e46efc25ab47dcb2445971f4a57ba2",
+    "engines": "@anthropic-ai/claude-code 2.1.308, @openai/codex 0.166.0 (npm, baked into the template image)",
+    "edge": "caddy:2.11.7@sha256:36c24ad91a7ff7bc4c87fe22bfa8df3c4b18da0773d73fc12ee2c52b98c0bb7e",
+    "checked": "2026-10-30"
+  },
+  "services": {
+    "OpenMausBot": {
+      "icon": "https://cdn.jsdelivr.net/gh/milind-soni/OpenMausBot@0213b7435fc83a936f77c18475ba2a0d7b7c2de4/public/app-icon-512.png",
+      "source": {
+        "repo": "baranberkay96/openmausbot-railway",
+        "rootDirectory": "/services/openmausbot"
+      },
+      "startCommand": null,
+      "preDeployCommand": null,
+      "healthcheckPath": "/api/health",
+      "healthcheckTimeout": 300,
+      "restartPolicyType": "ALWAYS",
+      "numReplicas": 1,
+      "cronSchedule": null,
+      "publicDomain": true,
+      "targetPort": 8080,
+      "tcpProxy": null,
+      "volume": {
+        "mountPath": "/data"
+      },
+      "variables": {
+        "PORT": {
+          "defaultValue": "8080",
+          "description": "Port of the public edge (Caddy) in front of OpenMausBot. Railway's healthcheck and the domain use it; keep 8080.",
+          "required": false
+        },
+        "OPENMAUSBOT_OWNER_PASSWORD": {
+          "defaultValue": "${{secret(32)}}",
+          "description": "Owner password for {your-domain}/railway/sign-in, generated at deploy (12+ characters). Signing in pairs that browser with full access. Empty turns the page off.",
+          "required": false
+        },
+        "OMB_PUBLIC_URL": {
+          "defaultValue": "https://${{RAILWAY_PUBLIC_DOMAIN}}",
+          "description": "Public HTTPS address used in pairing and webhook links. Change it to https://{your-domain} after attaching a custom domain.",
+          "required": false
+        },
+        "BOX_TOKEN": {
+          "defaultValue": "",
+          "description": "Optional. Boat (boat.dev) API key that gives bots their own cloud Linux computer (paid after Boat's trial). You can also paste it later in Settings.",
+          "required": false
+        },
+        "COMPOSIO_API_KEY": {
+          "defaultValue": "",
+          "description": "Optional. Composio project key (ak_...) for connected apps such as Gmail, Slack or GitHub. You can also paste it later in Settings.",
+          "required": false
+        },
+        "RAILWAY_DEPLOYMENT_DRAINING_SECONDS": {
+          "defaultValue": "30",
+          "description": "Seconds a running deployment gets to stop bot turns cleanly before a redeploy replaces it.",
+          "required": false
+        }
+      }
+    }
+  },
+  "buckets": []
+}
